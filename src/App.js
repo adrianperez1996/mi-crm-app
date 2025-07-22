@@ -5,7 +5,9 @@ import {
     onAuthStateChanged, 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
-    signOut 
+    signOut,
+    GoogleAuthProvider,
+    signInWithPopup
 } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, onSnapshot, setLogLevel } from 'firebase/firestore';
 import { ArrowRight, User, DollarSign, FileText, CheckSquare, Bell, Send, Folder, Plus, Edit, Trash2, X, Printer, LogOut, Eye, EyeOff } from 'lucide-react';
@@ -24,6 +26,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 // --- Auth Page Component ---
 const AuthPage = () => {
@@ -51,6 +54,18 @@ const AuthPage = () => {
         setLoading(false);
     };
 
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            await signInWithPopup(auth, googleProvider);
+        } catch (err) {
+            setError('No se pudo iniciar sesión con Google. Inténtalo de nuevo.');
+            console.error(err);
+        }
+        setLoading(false);
+    };
+
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-xl dark:bg-gray-800">
@@ -60,6 +75,22 @@ const AuthPage = () => {
                 <p className="text-center text-gray-500 dark:text-gray-400">
                     Accede a tu CRM personalizado
                 </p>
+                
+                <button
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center px-4 py-2 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                >
+                    <svg className="w-5 h-5 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 110.3 512 0 398.8 0 256S110.3 0 244 0c69.9 0 131.6 28.3 176.3 74.3l-68.5 68.5c-24.3-23-56.6-36.8-93.2-36.8-69.7 0-126.5 56.8-126.5 126.5s56.8 126.5 126.5 126.5c76.3 0 114.8-52.2 118.9-78.5H244V261.8h244z"></path></svg>
+                    Continuar con Google
+                </button>
+
+                <div className="relative flex items-center py-2">
+                    <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                    <span className="flex-shrink mx-4 text-sm text-gray-500 dark:text-gray-400">O</span>
+                    <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+
                 <form onSubmit={handleAuthAction} className="space-y-6">
                     <input
                         type="email"
