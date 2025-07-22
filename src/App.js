@@ -10,7 +10,7 @@ import {
     signInWithPopup
 } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, onSnapshot, setLogLevel } from 'firebase/firestore';
-import { ArrowRight, User, DollarSign, FileText, CheckSquare, Bell, Send, Folder, Plus, Edit, Trash2, X, Printer, LogOut, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, User, DollarSign, FileText, CheckSquare, Bell, Send, Folder, Plus, Edit, Trash2, X, Printer, LogOut, Eye, EyeOff, Menu } from 'lucide-react';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
@@ -196,6 +196,7 @@ export default function App() {
 
 const CrmApp = ({ user }) => {
     const [activeSection, setActiveSection] = useState('dashboard');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [clients, setClients] = useState([]);
     const [payments, setPayments] = useState([]);
     const [taxes, setTaxes] = useState([]);
@@ -311,8 +312,15 @@ const CrmApp = ({ user }) => {
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100">
             <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} userEmail={user.email} />
+            <MobileNav 
+                isOpen={isMobileMenuOpen} 
+                onClose={() => setIsMobileMenuOpen(false)}
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                userEmail={user.email}
+            />
             <main className="flex-1 flex flex-col overflow-hidden">
-                <Header sectionTitle={activeSection} />
+                <Header sectionTitle={activeSection} onMenuClick={() => setIsMobileMenuOpen(true)} />
                 <div className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-4 md:p-6">
                     {renderSection()}
                 </div>
@@ -370,9 +378,73 @@ const Sidebar = ({ activeSection, setActiveSection, userEmail }) => {
     );
 };
 
-const Header = ({ sectionTitle }) => (
-    <header className="bg-white dark:bg-gray-800 shadow-sm p-4 border-b dark:border-gray-700">
+const MobileNav = ({ isOpen, onClose, activeSection, setActiveSection, userEmail }) => {
+    const navItems = [
+        { id: 'dashboard', label: 'Panel Principal', icon: <ArrowRight size={20} /> },
+        { id: 'clients', label: 'Clientes', icon: <User size={20} /> },
+        { id: 'payments', label: 'Control de Pagos', icon: <DollarSign size={20} /> },
+        { id: 'taxes', label: 'Gestión de Impuestos', icon: <FileText size={20} /> },
+        { id: 'tasks', label: 'Tareas', icon: <CheckSquare size={20} /> },
+        { id: 'notifications', label: 'Notificaciones', icon: <Bell size={20} /> },
+        { id: 'circulars', label: 'Envío de Circulares', icon: <Send size={20} /> },
+        { id: 'drive', label: 'Almacén (Drive)', icon: <Folder size={20} /> },
+    ];
+
+    const handleNavItemClick = (sectionId) => {
+        setActiveSection(sectionId);
+        onClose();
+    };
+
+    return (
+        <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <div className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-lg p-4 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex justify-between items-center mb-4 border-b pb-4 border-gray-200 dark:border-gray-700">
+                     <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">ClientCRM</h1>
+                    <button onClick={onClose} className="p-2 text-gray-500 dark:text-gray-400">
+                        <X size={24} />
+                    </button>
+                </div>
+                 <ul className="flex-1 space-y-2">
+                    {navItems.map(item => (
+                        <li key={item.id}>
+                            <button
+                                onClick={() => handleNavItemClick(item.id)}
+                                className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-left font-medium transition-all duration-200 ${
+                                    activeSection === item.id
+                                        ? 'bg-blue-500 text-white shadow-md'
+                                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                }`}
+                            >
+                                {item.icon}
+                                <span>{item.label}</span>
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+                <div className="absolute bottom-0 left-0 w-full px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2" title={userEmail}>{userEmail}</p>
+                    <button
+                        onClick={() => {
+                            signOut(auth);
+                            onClose();
+                        }}
+                        className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-left font-medium text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+                    >
+                        <LogOut size={20} />
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Header = ({ sectionTitle, onMenuClick }) => (
+    <header className="bg-white dark:bg-gray-800 shadow-sm p-4 border-b dark:border-gray-700 flex items-center justify-between">
         <h2 className="text-2xl font-semibold capitalize text-gray-800 dark:text-gray-100">{sectionTitle.replace(/_/g, ' ')}</h2>
+        <button onClick={onMenuClick} className="md:hidden p-2 text-gray-600 dark:text-gray-300">
+            <Menu size={24} />
+        </button>
     </header>
 );
 
